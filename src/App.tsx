@@ -3,16 +3,41 @@ import styled from 'styled-components'
 import type { RootState } from './store'
 import { addContact, removeContact, startEditing, cancelEditing, updateContact } from './features/contactsSlice'
 import { useState } from 'react'
+import bg from './assets/welcome-bg.svg'
+
+const Page = styled.div`
+  min-height: 100vh;
+  background: url(${bg}) center/cover no-repeat fixed;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+  }
+`
 
 const Container = styled.div`
-  max-width: 800px;
-  margin: 40px auto;
-  padding: 24px;
+  position: relative;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  color: #fff;
+
+  @media (max-width: 600px) {
+    padding: 20px 16px 32px;
+  }
 `
 
 const Title = styled.h1`
-  margin-bottom: 16px;
+  margin-bottom: 8px;
+  font-size: 28px;
+
+  @media (max-width: 600px) {
+    font-size: 22px;
+  }
 `
 
 const Form = styled.form`
@@ -21,19 +46,42 @@ const Form = styled.form`
   gap: 8px;
   margin-bottom: 24px;
 
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+
+    button {
+      grid-column: span 2;
+    }
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+
+    button {
+      width: 100%;
+      grid-column: 1;
+    }
+  }
+
   input {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    ::placeholder { color: rgba(255,255,255,0.85); }
   }
 
   button {
-    padding: 8px 12px;
+    padding: 10px 12px;
     border-radius: 6px;
     border: none;
-    background: #1e88e5;
+    background: #43a047;
     color: #fff;
     cursor: pointer;
+    font-weight: 600;
   }
 `
 
@@ -48,9 +96,34 @@ const Item = styled.li`
   align-items: center;
   gap: 8px;
   padding: 12px;
-  border: 1px solid #eee;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 8px;
   margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.1);
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  div {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  input {
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+  }
 `
 
 const SmallButton = styled.button`
@@ -62,13 +135,13 @@ const SmallButton = styled.button`
   cursor: pointer;
   margin-left: 8px;
 
-  &.danger {
-    background: #e53935;
+  @media (max-width: 600px) {
+    padding: 10px 12px;
+    margin-left: 0;
   }
 
-  &.success {
-    background: #43a047;
-  }
+  &.danger { background: #e53935; }
+  &.success { background: #43a047; }
 `
 
 function App() {
@@ -106,48 +179,50 @@ function App() {
   }
 
   return (
-    <Container>
-      <Title>Lista de Contatos</Title>
+    <Page>
+      <Container>
+        <Title>Lista de Contatos</Title>
 
-      <Form onSubmit={onAdd}>
-        <input placeholder="Nome completo" value={nome} onChange={(e) => setNome(e.target.value)} />
-        <input placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input placeholder="Telefone" value={telefone} onChange={(e) => setTelefone(e.target.value)} />
-        <button type="submit">Adicionar</button>
-      </Form>
+        <Form onSubmit={onAdd}>
+          <input type="text" placeholder="Nome completo" value={nome} onChange={(e) => setNome(e.target.value)} autoComplete="name" />
+          <input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+          <input type="tel" placeholder="Telefone" value={telefone} onChange={(e) => setTelefone(e.target.value)} autoComplete="tel" />
+          <button type="submit">Adicionar</button>
+        </Form>
 
-      <List>
-        {contacts.map((c) => (
-          <Item key={c.id}>
-            {editingId === c.id ? (
-              <>
-                <input value={editNome} onChange={(e) => setEditNome(e.target.value)} />
-                <input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
-                <input value={editTelefone} onChange={(e) => setEditTelefone(e.target.value)} />
-                <div>
-                  <SmallButton className="success" onClick={() => onConfirmEdit(c.id)}>
-                    Salvar
-                  </SmallButton>
-                  <SmallButton onClick={() => dispatch(cancelEditing())}>Cancelar</SmallButton>
-                </div>
-              </>
-            ) : (
-              <>
-                <span>{c.nome}</span>
-                <span>{c.email}</span>
-                <span>{c.telefone}</span>
-                <div>
-                  <SmallButton onClick={() => onStartEdit(c.id, c)}>Editar</SmallButton>
-                  <SmallButton className="danger" onClick={() => dispatch(removeContact(c.id))}>
-                    Remover
-                  </SmallButton>
-                </div>
-              </>
-            )}
-          </Item>
-        ))}
-      </List>
-    </Container>
+        <List>
+          {contacts.map((c) => (
+            <Item key={c.id}>
+              {editingId === c.id ? (
+                <>
+                  <input value={editNome} onChange={(e) => setEditNome(e.target.value)} />
+                  <input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
+                  <input value={editTelefone} onChange={(e) => setEditTelefone(e.target.value)} />
+                  <div>
+                    <SmallButton className="success" onClick={() => onConfirmEdit(c.id)}>
+                      Salvar
+                    </SmallButton>
+                    <SmallButton onClick={() => dispatch(cancelEditing())}>Cancelar</SmallButton>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <span>{c.nome}</span>
+                  <span>{c.email}</span>
+                  <span>{c.telefone}</span>
+                  <div>
+                    <SmallButton onClick={() => onStartEdit(c.id, c)}>Editar</SmallButton>
+                    <SmallButton className="danger" onClick={() => dispatch(removeContact(c.id))}>
+                      Remover
+                    </SmallButton>
+                  </div>
+                </>
+              )}
+            </Item>
+          ))}
+        </List>
+      </Container>
+    </Page>
   )
 }
 
